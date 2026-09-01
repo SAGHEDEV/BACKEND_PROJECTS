@@ -5,6 +5,7 @@ interface Book {
     category: string;
     publishedYear: number;
     available: boolean;
+    authorId: number;
 }
 
 interface Author {
@@ -20,9 +21,9 @@ interface Member {
 
 interface Borrowing {
     id: number;
-    bookId: string;
+    bookId: number;
     borrowedAt: Date;
-    borrowedBy: string;
+    borrowerId: number;
     dueDate: Date;
     returnedAt?: Date;
 }

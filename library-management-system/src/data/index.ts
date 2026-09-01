@@ -1,6 +1,6 @@
 const books: Book[] = [];
-const Authors: Author[] = [];
+const authors: Author[] = [];
 const members: Member[] = [];
 const borrowings: Borrowing[] = [];
 
-export { books, Authors, members, borrowings };
+export { books, authors, members, borrowings };
