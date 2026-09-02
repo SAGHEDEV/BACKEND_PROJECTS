@@ -12,6 +12,9 @@ const handleBorrowBook = ({ bookId, borrowerId, dueDate }: { bookId: number; bor
     if (!borrower) {
         throw new Error(`Borrower not found`);
     }
+    if (dueDate <= new Date()) {
+        throw new Error(`Due date must be a future date`);
+    }
 
     const newBorrowing = {
         id: borrowings.length + 1,
