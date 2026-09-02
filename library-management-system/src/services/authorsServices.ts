@@ -1,6 +1,5 @@
 import { authors, books } from "../data/index.js";
 
-
 const handleGetAllAuthor = ({ limit, page }: { limit: number; page: number }) => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
@@ -15,16 +14,19 @@ const handleGetAllAuthor = ({ limit, page }: { limit: number; page: number }) =>
     }
 }
 
-const handleGetSingleAuthor = (id: number) => {
-    const author = authors.find((author) => author.id === id);
-    if (!author) {
+const handleGetSingleAuthor = (id: number) : Author => {
+    const authorExists = authors.find((author) => author.id === id);
+    if (!authorExists) {
         throw new Error(`Author with id ${id} not found`);
     }
-    return author;
+    return authorExists;
 }
 
-const handleCreateAuthor = (authorName: string) => {
-    const authorExists = authors.find((author) => author.name === authorName);
+const handleCreateAuthor = (authorName: string): Author => {
+    const normalizedName = authorName.trim().toLowerCase();
+    const authorExists = authors.find(
+        author => author.name.toLowerCase() === normalizedName
+    );
     if (authorExists) {
         throw new Error(`Author with name ${authorName} already exists`);
     }
@@ -36,10 +38,14 @@ const handleCreateAuthor = (authorName: string) => {
     return newAuthor;
 }
 
-const handleUpdateAuthor = (id: number, updatedAuthor: Partial<Omit<Author, 'id'>>) => {
+const handleUpdateAuthor = (id: number, updatedAuthor: Partial<Omit<Author, 'id'>>) : Author => {
     const index = authors.findIndex(author => author.id === id);
     if (index === -1) {
         throw new Error(`Author not found!`);
+    }
+    const authorExists = updatedAuthor.name ? authors.find(author => author.name === updatedAuthor.name && author.id !== id) : false;
+    if (authorExists) {
+        throw new Error(`Author with name ${updatedAuthor.name} already exists`);
     }
 
     // Merges existing author with only the defined fields in updatedAuthor

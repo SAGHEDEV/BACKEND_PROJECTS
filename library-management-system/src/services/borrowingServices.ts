@@ -12,20 +12,17 @@ const handleBorrowBook = ({ bookId, borrowerId, dueDate }: { bookId: number; bor
     if (!borrower) {
         throw new Error(`Borrower not found`);
     }
-    const borrowingExists = borrowings.find((borrowing) => borrowing.bookId === bookId && !borrowing.returnedAt && borrowing.borrowerId === borrowerId);
-    if (borrowingExists) {
-        throw new Error(`Duplicate borrowing entry found for this book and borrower. Please return the book before borrowing again.`);
-    }
-    const newBooking = {
+
+    const newBorrowing = {
         id: borrowings.length + 1,
         bookId: bookId,
         borrowerId: borrowerId,
         dueDate: dueDate,
         borrowedAt: new Date(),
     }
-    borrowings.push(newBooking);
+    borrowings.push(newBorrowing);
     book.available = false;
-    return newBooking;
+    return newBorrowing;
 }
 
 const handleReturnBook = ({ bookId, borrowerId }: { bookId: number; borrowerId: number }) => {
@@ -51,7 +48,13 @@ const handleGetAllBorrowings = ({ limit, page }: { limit: number; page: number }
     const paginatedBorrowings = borrowings.slice(startIndex, endIndex);
     const totalPages = Math.ceil(borrowings.length / limit);
     return {
-        data: paginatedBorrowings,
+        data: paginatedBorrowings.map(borrowing => ({
+            ...borrowing,
+            book: books.find(book => book.id === borrowing.bookId),
+            borrower: members.find(
+                member => member.id === borrowing.borrowerId
+            ),
+        })),
         page: page,
         limit: limit,
         total: borrowings.length,

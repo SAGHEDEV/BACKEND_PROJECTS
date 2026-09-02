@@ -8,6 +8,10 @@ interface Book {
     authorId: number;
 }
 
+interface BookWithAuthor extends Book {
+    author?: Author | undefined;
+}
+
 interface Author {
     id: number;
     name: string;

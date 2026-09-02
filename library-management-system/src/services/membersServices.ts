@@ -23,7 +23,7 @@ const handleGetMemberById = (id: number) => {
 }
 
 const handleAddMember = (member: { name: string; email: string }) => {
-    const emailExist = members.find((member) => member.email === member.email);
+    const emailExist = members.find((existingMember) => existingMember.email === member.email);
     if (emailExist) {
         throw new Error(`Member with email ${member.email} already exists`);
     }
@@ -39,6 +39,11 @@ const handleUpdateMember = (id: number, updatedMember: Partial<Omit<Member, 'id'
     const index = members.findIndex(member => member.id === id);
     if (index === -1) {
         throw new Error(`Member not found!`);
+    }
+
+    const emailExist = updatedMember.email ? members.find((existingMember) => existingMember.email === updatedMember.email && existingMember.id !== id) : false;
+    if (emailExist) {
+        throw new Error(`Member with email ${updatedMember.email} already exists`);
     }
 
     // Merges existing member with only the defined fields in updatedMember
@@ -62,6 +67,10 @@ const handleDeleteMember = (id: number) => {
 }
 
 const handleGetAllMemberBorrowings = ({ id, limit, page }: { id: number; limit: number; page: number }) => {
+    const memberExists = members.find((member) => member.id === id);
+    if (!memberExists) {
+        throw new Error(`Member not found`);
+    }
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const filteredBorrowings = borrowings.filter((borrowing) => borrowing.borrowerId === id);
@@ -71,7 +80,7 @@ const handleGetAllMemberBorrowings = ({ id, limit, page }: { id: number; limit: 
         data: paginatedBorrowings,
         page: page,
         limit: limit,
-        total: paginatedBorrowings.length,
+        total: filteredBorrowings.length,
         totalPages: totalPages
     };
 }
