@@ -7,7 +7,7 @@ const handleGetAllMembers = ({ limit = 10, page = 1 }: { limit?: number; page?: 
     const paginatedMembers = members.slice(startIndex, endIndex);
     const totalPages = Math.ceil(members.length / limit);
     return {
-        message: "All user fetched successfully!",
+        message: "All members fetched successfully!",
         success: true,
         data: paginatedMembers,
         page: page,
