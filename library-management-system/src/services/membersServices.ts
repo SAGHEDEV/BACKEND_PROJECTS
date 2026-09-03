@@ -1,12 +1,14 @@
 import { borrowings, members } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
 
-const handleGetAllMembers = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) => {
+const handleGetAllMembers = ({ limit = 10, page = 1 }: { limit?: number; page?: number }): GetAllMemberResponse => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedMembers = members.slice(startIndex, endIndex);
     const totalPages = Math.ceil(members.length / limit);
     return {
+        message: "All user fetched successfully!",
+        success: true,
         data: paginatedMembers,
         page: page,
         limit: limit,
@@ -67,7 +69,7 @@ const handleDeleteMember = (id: number) => {
     return deletedMember;
 }
 
-const handleGetAllMemberBorrowings = ({ id, limit = 10, page = 1 }: { id: number; limit?: number; page?: number }) => {
+const handleGetAllMemberBorrowings = ({ id, limit = 10, page = 1 }: { id: number; limit?: number; page?: number }) : GetAllBorrowingResponse => {
     const memberExists = members.find((member) => member.id === id);
     if (!memberExists) {
         throw new AppError(`Member not found`, 404);
@@ -78,6 +80,8 @@ const handleGetAllMemberBorrowings = ({ id, limit = 10, page = 1 }: { id: number
     const paginatedBorrowings = filteredBorrowings.slice(startIndex, endIndex);
     const totalPages = Math.ceil(filteredBorrowings.length / limit);
     return {
+        message: "All members borrowings gotten!",
+        success: true,
         data: paginatedBorrowings,
         page: page,
         limit: limit,

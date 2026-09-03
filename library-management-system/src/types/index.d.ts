@@ -44,22 +44,22 @@ interface ResponseBody {
     success: boolean;
 }
 
-interface GetAllBookResponse extends Pagination {
+interface GetAllBookResponse extends Pagination, ResponseBody {
     data: BookWithAuthor[];
 }
 
-interface GetAllAuthorResponse extends Pagination {
+interface GetAllAuthorResponse extends Pagination, ResponseBody {
     data: Author[];
 }
 
-interface GetAllAuthorBooksResponse extends Pagination {
+interface GetAllAuthorBooksResponse extends Pagination, ResponseBody {
     data: Book[];
 }
 
-interface GetAllMemberResponse extends Pagination {
+interface GetAllMemberResponse extends Pagination, ResponseBody {
     data: Member[];
 }
 
-interface GetAllBorrowingResponse extends Pagination {
+interface GetAllBorrowingResponse extends Pagination, ResponseBody {
     data: (Borrowing & { book?: Book | undefined; borrower?: Member | undefined })[];
 }

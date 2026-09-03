@@ -54,6 +54,8 @@ const handleGetAllBooks = ({ limit = 10, page = 1, availability, search, sort }:
     }));
     const totalPages = Math.ceil(filteredBooks.length / limit);
     return {
+        message: "All books gotten successfully!",
+        success: true,
         data: paginatedBooksWithAuthors as BookWithAuthor[],
         page: page,
         limit: limit,

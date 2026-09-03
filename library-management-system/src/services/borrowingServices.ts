@@ -46,12 +46,14 @@ const handleReturnBook = ({ bookId, borrowerId }: { bookId: number; borrowerId: 
     return borrowing;
 }
 
-const handleGetAllBorrowings = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) => {
+const handleGetAllBorrowings = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) : GetAllBorrowingResponse => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedBorrowings = borrowings.slice(startIndex, endIndex);
     const totalPages = Math.ceil(borrowings.length / limit);
     return {
+        message: "All Borrowings returned suceesfully!",
+        success: true,
         data: paginatedBorrowings.map(borrowing => ({
             ...borrowing,
             book: books.find(book => book.id === borrowing.bookId),

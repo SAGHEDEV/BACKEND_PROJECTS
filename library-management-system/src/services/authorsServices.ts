@@ -7,6 +7,8 @@ const handleGetAllAuthor = ({ limit = 10, page = 1 }: { limit?: number; page?: n
     const paginatedAuthors = authors.slice(startIndex, endIndex);
     const totalPages = Math.ceil(authors.length / limit);
     return {
+        message: "All authors fetched successfully!",
+        success: false,
         data: paginatedAuthors,
         page: page,
         limit: limit,
@@ -80,6 +82,8 @@ const handleGetAllAuthorBooks = ({ authorId, limit = 10, page = 1 }: { authorId:
     const paginatedBooks = authorBooks.slice(startIndex, endIndex);
     const totalPages = Math.ceil(authorBooks.length / limit);
     return {
+        message: "All Author books gotten successfully!",
+        success: true,
         data: paginatedBooks,
         page: page,
         limit: limit,
