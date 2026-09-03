@@ -4,39 +4,42 @@ import { handleAddBook, handleDeleteBook, handleGetAllBooks, handleGetBookById, 
 const getBooksController = (req: Request, res: Response) => {
     const { limit, page, availability, search, sort } = req.query as { limit: string; page: string; availability?: string; search?: string; sort?: "title" | "publishedYear" | "category" | "authorName" };
 
-        const response = handleGetAllBooks({
-            limit: parseInt(limit),
-            page: parseInt(page),
-            ...(availability !== undefined ? { availability: Boolean(availability) } : {}),
-            ...(search ? { search } : {}),
-            ...(sort ? { sort } : {})
-        });
-        res.json(response).status(200);
+    const response = handleGetAllBooks({
+        limit: limit ? parseInt(limit) : 10,
+        page: page ? parseInt(page) : 1,
+        ...(availability !== undefined ? {
+            availability: availability ==
+                "true" ? true : false
+        } : {}),
+        ...(search ? { search } : {}),
+        ...(sort ? { sort } : {})
+    });
+    res.status(200).json(response);
 };
 
 const getBookByIdController = (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
     const response = handleGetBookById(bookId);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
-const postBookController = (req: Request, res:Response) => {
+const postBookController = (req: Request, res: Response) => {
     const payload = req.body;
     const response = handleAddBook(payload);
-    res.json(response).status(201);
+    res.status(201).json(response);
 }
 
 const updateBookController = (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
     const payload = req.body;
     const response = handleUpdateBook(bookId, payload);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const deleteBookController = (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
     const response = handleDeleteBook(bookId);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
-export {getBooksController, getBookByIdController, postBookController, updateBookController, deleteBookController}
+export { getBooksController, getBookByIdController, postBookController, updateBookController, deleteBookController }

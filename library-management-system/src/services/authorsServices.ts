@@ -1,14 +1,15 @@
 import { authors, books } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
 
-const handleGetAllAuthor = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) : GetAllAuthorResponse => {
+const handleGetAllAuthor = ({ limit, page }: { limit: number; page: number }) : GetAllAuthorResponse => {
+    console.log(limit, page)
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedAuthors = authors.slice(startIndex, endIndex);
+    const paginatedAuthors = [...authors].slice(startIndex, endIndex);
     const totalPages = Math.ceil(authors.length / limit);
     return {
         message: "All authors fetched successfully!",
-        success: false,
+        success: true,
         data: paginatedAuthors,
         page: page,
         limit: limit,

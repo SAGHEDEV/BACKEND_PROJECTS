@@ -1,9 +1,9 @@
 import { authors, books } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
 
-const handleGetAllBooks = ({ limit = 10, page = 1, availability, search, sort }: {
-    limit?: number;
-    page?: number;
+const handleGetAllBooks = ({ limit, page, availability, search, sort }: {
+    limit: number;
+    page: number;
     availability?: boolean | undefined;
     search?: string;
     sort?: "title" | "publishedYear" | "category" | "authorName";

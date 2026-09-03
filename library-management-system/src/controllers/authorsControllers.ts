@@ -4,35 +4,35 @@ import type { Request, Response } from "express";
 const getAllAuthorsController = (req: Request, res: Response) => {
     const { limit, page } = req.query as { limit?: string; page?: string };
     const response = handleGetAllAuthor({
-        limit: parseInt(limit as string),
-        page: parseInt(page as string),
+        limit: limit ? parseInt(limit) : 10,
+        page: page ? parseInt(page) : 1,
     });
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const getAuthorByIdController = (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
     const response = handleGetSingleAuthor(authorId);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const createAuthorController = (req: Request, res: Response) => {
     const { name } = req.body;
     const response = handleCreateAuthor(name);
-    res.json(response).status(201);
+    res.status(201).json(response);
 }
 
 const updateAuthorController = (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
     const payload = req.body;
     const response = handleUpdateAuthor(authorId, payload);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const deleteAuthorController = (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
     const response = handleDeleteAuthor(authorId);
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const getAllAuthorBooksController = (req: Request, res: Response) => {
@@ -40,10 +40,10 @@ const getAllAuthorBooksController = (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
     const response = handleGetAllAuthorBooks({
         authorId: authorId,
-        limit: parseInt(limit as string),
-        page: parseInt(page as string),
+        limit: limit ? parseInt(limit) : 10,
+        page: page ? parseInt(page) : 1,
     });
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 export { getAllAuthorsController, getAuthorByIdController, createAuthorController, updateAuthorController, deleteAuthorController, getAllAuthorBooksController }

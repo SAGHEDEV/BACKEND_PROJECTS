@@ -46,7 +46,7 @@ const handleReturnBook = ({ bookId, borrowerId }: { bookId: number; borrowerId: 
     return borrowing;
 }
 
-const handleGetAllBorrowings = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) : GetAllBorrowingResponse => {
+const handleGetAllBorrowings = ({ limit, page }: { limit: number; page: number }) : GetAllBorrowingResponse => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedBorrowings = borrowings.slice(startIndex, endIndex);

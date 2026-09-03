@@ -4,10 +4,10 @@ import { handleBorrowBook, handleGetAllBorrowings, handleReturnBook } from "../s
 const getAllBorrowingsController = (req: Request, res: Response) => {
     const { limit, page } = req.query as { limit?: string; page?: string };
     const response = handleGetAllBorrowings({
-        limit: parseInt(limit as string),
-        page: parseInt(page as string),
+        limit: limit ? parseInt(limit) : 10,
+        page: page ? parseInt(page) : 1,
     });
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 const postBorrowingController = (req: Request, res: Response) => {
@@ -17,7 +17,7 @@ const postBorrowingController = (req: Request, res: Response) => {
         borrowerId: payload.borrowerId,
         dueDate: payload.dueDate,
     });
-    res.json(response).status(201);
+    res.status(201).json(response);
 } 
 
 const returnBookController = (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ const returnBookController = (req: Request, res: Response) => {
         bookId: payload.bookId,
         borrowerId: payload.borrowerId,
     });
-    res.json(response).status(200);
+    res.status(200).json(response);
 }
 
 export { getAllBorrowingsController, postBorrowingController, returnBookController }

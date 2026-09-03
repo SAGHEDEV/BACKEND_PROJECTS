@@ -1,7 +1,7 @@
 import { borrowings, members } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
 
-const handleGetAllMembers = ({ limit = 10, page = 1 }: { limit?: number; page?: number }): GetAllMemberResponse => {
+const handleGetAllMembers = ({ limit, page }: { limit: number; page: number }): GetAllMemberResponse => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedMembers = members.slice(startIndex, endIndex);
@@ -69,7 +69,7 @@ const handleDeleteMember = (id: number) => {
     return deletedMember;
 }
 
-const handleGetAllMemberBorrowings = ({ id, limit = 10, page = 1 }: { id: number; limit?: number; page?: number }) : GetAllBorrowingResponse => {
+const handleGetAllMemberBorrowings = ({ id, limit, page }: { id: number; limit: number; page: number }) : GetAllBorrowingResponse => {
     const memberExists = members.find((member) => member.id === id);
     if (!memberExists) {
         throw new AppError(`Member not found`, 404);

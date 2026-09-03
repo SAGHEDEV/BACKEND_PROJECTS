@@ -5,10 +5,10 @@ const authorsRoutes = Router();
 
 authorsRoutes.get("/authors", getAllAuthorsController)
 authorsRoutes.get("/authors/:id", getAuthorByIdController)
-authorsRoutes.post("/authors", getAllAuthorsController)
-authorsRoutes.put("/authors/:id", getAllAuthorsController)
-authorsRoutes.patch("/authors/:id", getAllAuthorsController)
-authorsRoutes.delete("/authors/:id", getAllAuthorsController)
+authorsRoutes.post("/authors", createAuthorController)
+authorsRoutes.put("/authors/:id", updateAuthorController)
+authorsRoutes.patch("/authors/:id", updateAuthorController)
+authorsRoutes.delete("/authors/:id", deleteAuthorController)
 authorsRoutes.get("/authors/:id/books", getAllAuthorBooksController)
 
 export default authorsRoutes;
