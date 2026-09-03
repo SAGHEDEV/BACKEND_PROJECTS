@@ -1,19 +1,20 @@
 import { books, borrowings, members } from "../data/index.js";
+import { AppError } from "../middlewares/error.middleware.js";
 
-const handleBorrowBook = ({ bookId, borrowerId, dueDate }: { bookId: number; borrowerId: number; dueDate: Date }) => {
+const handleBorrowBook = ({ bookId, borrowerId, dueDate }: { bookId: number; borrowerId: number; dueDate: Date }): Borrowing => {
     const book = books.find((book) => book.id === bookId);
     const borrower = members.find((member) => member.id === borrowerId);
     if (!book) {
-        throw new Error(`Book not found`);
+        throw new AppError(`Book not found`, 404);
     }
     if (!book.available) {
-        throw new Error(`This book is not available for borrowing`);
+        throw new AppError(`This book is not available for borrowing`, 400);
     }
     if (!borrower) {
-        throw new Error(`Borrower not found`);
+        throw new AppError(`Borrower not found`, 404);
     }
     if (dueDate <= new Date()) {
-        throw new Error(`Due date must be a future date`);
+        throw new AppError(`Due date must be a future date`, 400);
     }
 
     const newBorrowing = {
@@ -28,24 +29,24 @@ const handleBorrowBook = ({ bookId, borrowerId, dueDate }: { bookId: number; bor
     return newBorrowing;
 }
 
-const handleReturnBook = ({ bookId, borrowerId }: { bookId: number; borrowerId: number }) => {
+const handleReturnBook = ({ bookId, borrowerId }: { bookId: number; borrowerId: number }): Borrowing => {
     const book = books.find((book) => book.id === bookId);
     if (!book) {
-        throw new Error(`Book not found`);
+        throw new AppError(`Book not found`, 404);
     }
     if (book.available) {
-        throw new Error(`This book is already available in the library. It cannot be returned.`);
+        throw new AppError(`This book is already available in the library. It cannot be returned.`, 400);
     }
     const borrowing = borrowings.find((borrowing) => borrowing.bookId === bookId && !borrowing.returnedAt && borrowing.borrowerId === borrowerId);
     if (!borrowing) {
-        throw new Error(`No active borrowing record found for this book and borrower.`);
+        throw new AppError(`No active borrowing record found for this book and borrower.`, 404);
     }
     borrowing.returnedAt = new Date();
     book.available = true;
     return borrowing;
 }
 
-const handleGetAllBorrowings = ({ limit, page }: { limit: number; page: number }) => {
+const handleGetAllBorrowings = ({ limit = 10, page = 1 }: { limit?: number; page?: number }) => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedBorrowings = borrowings.slice(startIndex, endIndex);

@@ -31,3 +31,35 @@ interface Borrowing {
     dueDate: Date;
     returnedAt?: Date;
 }
+
+interface Pagination {
+    totalPages: number;
+    page: number;
+    limit: number;
+    total: number;
+}
+
+interface ResponseBody {
+    message: string;
+    success: boolean;
+}
+
+interface GetAllBookResponse extends Pagination {
+    data: BookWithAuthor[];
+}
+
+interface GetAllAuthorResponse extends Pagination {
+    data: Author[];
+}
+
+interface GetAllAuthorBooksResponse extends Pagination {
+    data: Book[];
+}
+
+interface GetAllMemberResponse extends Pagination {
+    data: Member[];
+}
+
+interface GetAllBorrowingResponse extends Pagination {
+    data: (Borrowing & { book?: Book | undefined; borrower?: Member | undefined })[];
+}

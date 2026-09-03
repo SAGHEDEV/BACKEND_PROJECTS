@@ -1,13 +1,13 @@
 import { authors, books } from "../data/index.js";
+import { AppError } from "../middlewares/error.middleware.js";
 
-
-const handleGetAllBooks = ({ limit, page, availability, search, sort }: {
-    limit: number;
-    page: number;
-    availability?: boolean;
+const handleGetAllBooks = ({ limit = 10, page = 1, availability, search, sort }: {
+    limit?: number;
+    page?: number;
+    availability?: boolean | undefined;
     search?: string;
     sort?: "title" | "publishedYear" | "category" | "authorName";
-}) => {
+}) : GetAllBookResponse => {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const filteredBooks = books.filter((book) => {
@@ -65,7 +65,7 @@ const handleGetAllBooks = ({ limit, page, availability, search, sort }: {
 const handleGetBookById = (id: number): BookWithAuthor => {
     const book = books.find((book) => book.id === id);
     if (!book) {
-        throw new Error(`Book with id ${id} not found`);
+        throw new AppError(`Book with id ${id} not found`, 404);
     }
     const bookWithAuthor = {
         ...book,
@@ -74,14 +74,14 @@ const handleGetBookById = (id: number): BookWithAuthor => {
     return bookWithAuthor;
 }
 
-const handleAddBook = (book: { title: string; isbn: string; category: string; publishedYear: number; authorId: number }): Book => {
+const handleAddBook = (book: Omit<Book, 'id' | 'available'>): Book => {
     const authorExists = authors.find((author) => author.id === book.authorId);
     const isbnExist = books.find((existingBook) => book.isbn === existingBook.isbn);
     if (!authorExists) {
-        throw new Error(`Author detail was not found!`);
+        throw new AppError(`Author detail was not found!`, 404);
     }
     if (isbnExist) {
-        throw new Error(`Book with isbn ${book.isbn} already exists`);
+        throw new AppError(`Book with isbn ${book.isbn} already exists`, 400);
     }
     const newBook = {
         ...book,
@@ -98,13 +98,13 @@ const handleUpdateBook = (id: number, updatedBook: Partial<Omit<Book, 'id'>>) =>
     const authorExists = updatedBook.authorId ? authors.find(author => author.id === updatedBook.authorId) : true;
     const isbnExist = updatedBook.isbn ? books.find((existingBook) => updatedBook.isbn === existingBook.isbn && existingBook.id !== id) : false;
     if (index === -1) {
-        throw new Error(`Book not found!`);
+        throw new AppError(`Book with id ${id} not found`, 404);
     }
     if (isbnExist) {
-        throw new Error(`Book with isbn ${updatedBook.isbn} already exists`);
+        throw new AppError(`Book with isbn ${updatedBook.isbn} already exists`, 400);
     }
     if (!authorExists) {
-        throw new Error(`Author detail was not found!`);
+        throw new AppError(`Author detail was not found!`, 404);
     }
 
     // Merges existing book with only the defined fields in updatedBook
@@ -122,7 +122,7 @@ const handleUpdateBook = (id: number, updatedBook: Partial<Omit<Book, 'id'>>) =>
 const handleDeleteBook = (id: number) => {
     const bookIndex = books.findIndex(book => book.id === id);
     if (bookIndex === -1) {
-        throw new Error(`Book with ID ${id} not found!`);
+        throw new AppError(`Book with ID ${id} not found!`, 404);
     }
     const deletedBook = books.splice(bookIndex, 1)[0];
     return deletedBook;
