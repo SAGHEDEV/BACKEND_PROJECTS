@@ -16,9 +16,9 @@ const getBooksController = async (req: Request, res: Response) => {
     res.status(200).json(response);
 };
 
-const getBookByIdController = (req: Request, res: Response) => {
+const getBookByIdController = async (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
-    const response = handleGetBookById(bookId);
+    const response = await handleGetBookById(bookId);
     res.status(200).json(response);
 }
 
@@ -28,17 +28,17 @@ const postBookController = async (req: Request, res: Response) => {
     res.status(201).json(response);
 }
 
-const updateBookController = (req: Request, res: Response) => {
+const updateBookController = async (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
     const payload = req.body;
-    const response = handleUpdateBook(bookId, payload);
+    const response = await handleUpdateBook(bookId, payload);
     res.status(200).json(response);
 }
 
-const deleteBookController = (req: Request, res: Response) => {
+const deleteBookController = async (req: Request, res: Response) => {
     const bookId = parseInt(req.params.id as string);
-    const response = handleDeleteBook(bookId);
-    res.status(200).json(response);
+    const response = await handleDeleteBook(bookId);
+    res.status(204).json(response);
 }
 
 export { getBooksController, getBookByIdController, postBookController, updateBookController, deleteBookController }

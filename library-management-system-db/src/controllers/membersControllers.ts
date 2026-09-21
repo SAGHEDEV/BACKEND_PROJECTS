@@ -32,7 +32,7 @@ const updateMemberController = (req: Request, res: Response) => {
 const deleteMemberController = (req: Request, res: Response) => {
     const id = parseInt(req.params.id as string);
     const response = handleDeleteMember(id);
-    res.status(200).json(response);
+    res.status(204).json(response);
 }
 
 const getMemberBorrowingsController = (req: Request, res: Response) => {

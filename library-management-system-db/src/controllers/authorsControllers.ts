@@ -10,9 +10,9 @@ const getAllAuthorsController = async (req: Request, res: Response) => {
     res.status(200).json(response);
 }
 
-const getAuthorByIdController = (req: Request, res: Response) => {
+const getAuthorByIdController = async (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
-    const response = handleGetSingleAuthor(authorId);
+    const response = await handleGetSingleAuthor(authorId);
     res.status(200).json(response);
 }
 
@@ -29,16 +29,16 @@ const updateAuthorController = (req: Request, res: Response) => {
     res.status(200).json(response);
 }
 
-const deleteAuthorController = (req: Request, res: Response) => {
+const deleteAuthorController = async (req: Request, res: Response) => {
     const authorId = parseInt(req.params.id as string);
-    const response = handleDeleteAuthor(authorId);
-    res.status(200).json(response);
+    const response = await handleDeleteAuthor(authorId);
+    res.status(204).json(response);
 }
 
-const getAllAuthorBooksController = (req: Request, res: Response) => {
+const getAllAuthorBooksController = async (req: Request, res: Response) => {
     const { limit, page } = req.query as { limit?: string; page?: string };
     const authorId = parseInt(req.params.id as string);
-    const response = handleGetAllAuthorBooks({
+    const response = await handleGetAllAuthorBooks({
         authorId: authorId,
         limit: limit ? parseInt(limit) : 10,
         page: page ? parseInt(page) : 1,

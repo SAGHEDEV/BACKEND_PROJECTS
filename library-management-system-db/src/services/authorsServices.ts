@@ -1,7 +1,39 @@
 import db from "../config/database.js";
-import { authors, books } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
-import { checkAuthorExistence } from "./booksServices.js";
+
+export const checkAuthorExistence = async ({
+    id,
+    name
+}: {
+    id?: number;
+    name?: string;
+}): Promise<Boolean> => {
+
+    let query = "";
+    let value: number | string;
+
+    if (id !== undefined) {
+        query = `SELECT id FROM Author WHERE id = ?`;
+        value = id;
+    } else if (name !== undefined) {
+        query = `SELECT id FROM Author WHERE name = ?`;
+        value = name;
+    } else {
+        return false;
+    }
+
+    const [rows] = await db.query(query, [value]);
+
+    return (rows as unknown[]).length > 0;
+};
+
+export const checkNameExistence = async (name: string): Promise<Boolean> => {
+    const query = "SELECT * FROM Author WHERE name = ?";
+
+    const [rows] = await db.query(query, [name]);
+
+    return (rows as unknown[]).length > 0;
+}
 
 const handleGetAllAuthor = async ({
     limit,
@@ -37,12 +69,13 @@ const handleGetAllAuthor = async ({
     };
 };
 
-const handleGetSingleAuthor = (id: number): Author => {
-    const authorExists = authors.find((author) => author.id === id);
-    if (!authorExists) {
-        throw new AppError(`Author with id ${id} not found`, 404);
-    }
-    return authorExists;
+const handleGetSingleAuthor = async (id: number): Promise<Author> => {
+    const query = "SELECT * FROM Author WHERE id ? ="
+
+    const [row] = await db.query(query, [id]);
+    const singleValue = row as Author[];
+
+    return singleValue[0] as Author;
 }
 
 const handleCreateAuthor = async (authorName: string): Promise<Author> => {
@@ -66,54 +99,67 @@ const handleCreateAuthor = async (authorName: string): Promise<Author> => {
     return newAuthor as unknown as Author;
 }
 
-const handleUpdateAuthor = (id: number, updatedAuthor: Partial<Omit<Author, 'id'>>): Author => {
-    const index = authors.findIndex(author => author.id === id);
-    if (index === -1) {
+const handleUpdateAuthor = async (id: number, updatedAuthor: Partial<Omit<Author, 'id'>>): Promise<Author> => {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    const authorExistence = await checkAuthorExistence({ id })
+
+    if (!authorExistence) {
         throw new AppError(`Author not found`, 404);
     }
-    const authorExists = updatedAuthor.name ? authors.find(author => author.name === updatedAuthor.name && author.id !== id) : false;
-    if (authorExists) {
-        throw new AppError(`Author with name ${updatedAuthor.name} already exists`, 400);
+    if (updatedAuthor.name) {
+        const authorExists = await checkNameExistence(updatedAuthor.name)
+        if (authorExists) {
+            throw new AppError(`Author with name ${updatedAuthor.name} already exists`, 400);
+        }
+        fields.push("name = ?");
+        values.push(updatedAuthor.name)
     }
 
-    // Merges existing author with only the defined fields in updatedAuthor
-    const updatedAuthorData: Author = {
-        ...authors[index],
-        ...updatedAuthor,
-    } as Author;
+    values.push(id);
 
-    authors[index] = updatedAuthorData;
+    const query = ` UPDATE Author SET ${fields.join(", ")} WHERE id = ?`;
 
-    return updatedAuthorData;
+    const [result] = await db.execute(query, values as any);
+
+
+
+    return (result as Author[])[0] as Author;
 }
 
-const handleDeleteAuthor = (id: number) => {
-    const authorIndex = authors.findIndex(author => author.id === id);
-    if (authorIndex === -1) {
-        throw new AppError(`Author not found in repository!`, 404);
+const handleDeleteAuthor = async (id: number): Promise<Author> => {
+    const authorExist = checkAuthorExistence({ id: id });
+    if (!authorExist) {
+        throw new AppError("Author was not found!", 404);
     }
-    const deletedAuthor = authors.splice(authorIndex, 1)[0];
-    return deletedAuthor;
+
+    const query = "SELECT FROM Author WHERE id = ?"
+    const [rows] = await db.query(query, [id]);
+
+    const deletedRow = rows as Author[]
+
+    return deletedRow[0] as Author;
 }
 
-const handleGetAllAuthorBooks = ({ authorId, limit = 10, page = 1 }: { authorId: number, limit?: number, page?: number }): GetAllAuthorBooksResponse => {
-    const authorExists = authors.find((author) => author.id === authorId);
-    if (!authorExists) {
-        throw new AppError(`Author not found in repository!`, 404);
-    }
-    const authorBooks = books.filter((book) => book.authorId === authorId);
+const handleGetAllAuthorBooks = async ({ authorId, limit = 10, page = 1 }: { authorId: number, limit?: number, page?: number }): Promise<GetAllAuthorBooksResponse> => {
     const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedBooks = authorBooks.slice(startIndex, endIndex);
-    const totalPages = Math.ceil(authorBooks.length / limit);
+    const query = `SELECT * FROM Books WHERE authorId = ? LIMIT ? OFFSET ?`
+    const [rows] = await db.query(query, [authorId, limit, startIndex])
+
+    const countQuery = `SELECT COUNT(*) FROM Books WHERE authorId = ?`
+    const [countRows] = await db.query(countQuery, [authorId, limit, startIndex])
+
+    const total = (countRows as { total: number }[])[0]?.total ?? 0;
+
     return {
         message: "All Author books gotten successfully!",
         success: true,
-        data: paginatedBooks,
+        data: rows as unknown[] as Book[],
         page: page,
         limit: limit,
-        total: authorBooks.length,
-        totalPages: totalPages
+        total: total,
+        totalPages: Math.ceil(total / limit)
     }
 }
 

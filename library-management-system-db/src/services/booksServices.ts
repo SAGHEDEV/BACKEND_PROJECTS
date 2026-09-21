@@ -1,32 +1,36 @@
 import db from "../config/database.js";
-import { authors, books } from "../data/index.js";
 import { AppError } from "../middlewares/error.middleware.js";
+import { checkAuthorExistence } from "./authorsServices.js";
 
-export const checkAuthorExistence = async ({
-    id,
-    name
-}: {
-    id?: number;
-    name?: string;
-}) => {
+export const checkISBNExistence = async ({ isbn }: { isbn: string }): Promise<Boolean> => {
+    const query = `SELECT isbn FROM Books WHERE isbn = ?`
+    const value = [isbn];
 
-    let query = "";
-    let value: number | string;
-
-    if (id !== undefined) {
-        query = `SELECT id FROM Author WHERE id = ?`;
-        value = id;
-    } else if (name !== undefined) {
-        query = `SELECT id FROM Author WHERE name = ?`;
-        value = name;
-    } else {
-        return false;
-    }
-
-    const [rows] = await db.query(query, [value]);
+    const [rows] = await db.query(query, value);
 
     return (rows as unknown[]).length > 0;
-};
+}
+
+export const checkBookExistence = async (id: number): Promise<Boolean> => {
+    const query = `SELECT * FROM Books WHERE id = ?`
+    const value = [id];
+
+    const [rows] = await db.query(query, value);
+
+    return (rows as unknown[]).length > 0;
+}
+
+export const checkBookAvailability = async (id: number): Promise<Boolean> => {
+    const query = `SELECT * FROM Books WHERE id = ?`
+
+    const [rows] = await db.query(query, [id]);
+
+    const rowResult = rows as Book[];
+
+    const available = (rowResult[0] as Book).available;
+
+    return available
+}
 
 const handleGetAllBooks = async ({
     limit,
@@ -106,14 +110,20 @@ const handleGetAllBooks = async ({
     };
 };
 
-const handleGetBookById = (id: number): BookWithAuthor => {
-    const book = books.find((book) => book.id === id);
-    if (!book) {
+const handleGetBookById = async (id: number): Promise<BookWithAuthor> => {
+    const bookQuery = `SELECT * FROM Books WHERE id = ?`;
+    const [rows] = await db.query(bookQuery, [id])
+    const bookResponse = rows as Book[]
+    if (bookResponse.length <= 0) {
         throw new AppError(`Book with id ${id} not found`, 404);
     }
+    const authorQuery = `SELECT * FROM Author WHERE id = ?`
+    const [authorRow] = await db.query(authorQuery, [bookResponse[0]?.id]);
+
+    const authorResponse = authorRow as Author[]
     const bookWithAuthor = {
-        ...book,
-        author: authors.find((author) => author.id === book.authorId)
+        ...(bookResponse[0]!),
+        author: authorResponse[0]
     };
     return bookWithAuthor;
 }
@@ -128,6 +138,13 @@ const handleAddBook = async (
 
     if (!authorExists) {
         throw new AppError("Author not found!", 404);
+    }
+
+    const isbnExist = await checkISBNExistence({
+        isbn: book.isbn
+    })
+    if (isbnExist) {
+        throw new AppError("Duplicate ISBN cannnot exist for different books!", 403);
     }
 
     const query = `
@@ -164,39 +181,110 @@ const handleAddBook = async (
     return newBook;
 };
 
-const handleUpdateBook = (id: number, updatedBook: Partial<Omit<Book, 'id'>>) => {
-    const index = books.findIndex(book => book.id === id);
-    const authorExists = updatedBook.authorId ? authors.find(author => author.id === updatedBook.authorId) : true;
-    const isbnExist = updatedBook.isbn ? books.find((existingBook) => updatedBook.isbn === existingBook.isbn && existingBook.id !== id) : false;
-    if (index === -1) {
+const handleUpdateBook = async (
+    id: number,
+    updatedBook: Partial<Omit<Book, "id">>
+): Promise<Book> => {
+
+    const bookExistence = checkBookExistence(id);
+    if (!bookExistence) {
+        throw new AppError("This book was not found!", 404)
+    }
+
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    if (updatedBook.title !== undefined) {
+        fields.push("title = ?");
+        values.push(updatedBook.title);
+    }
+
+    if (updatedBook.isbn !== undefined) {
+        fields.push("isbn = ?");
+        values.push(updatedBook.isbn);
+    }
+
+    if (updatedBook.category !== undefined) {
+        fields.push("category = ?");
+        values.push(updatedBook.category);
+    }
+
+    if (updatedBook.publishedYear !== undefined) {
+        fields.push("publishedYear = ?");
+        values.push(updatedBook.publishedYear);
+    }
+
+    if (updatedBook.available !== undefined) {
+        fields.push("available = ?");
+        values.push(updatedBook.available);
+    }
+
+    if (updatedBook.authorId !== undefined) {
+        fields.push("authorId = ?");
+        values.push(updatedBook.authorId);
+    }
+
+    if (fields.length === 0) {
+        throw new AppError("No fields provided for update", 400);
+    }
+
+    if (updatedBook.authorId !== undefined) {
+        const authorExists = await checkAuthorExistence({
+            id: updatedBook.authorId
+        });
+
+        if (!authorExists) {
+            throw new AppError("Author not found", 404);
+        }
+    }
+
+    const isbnExist = await checkISBNExistence({
+        isbn: updatedBook.isbn!
+    })
+
+    if (isbnExist) {
+        throw new AppError("Duplicate ISBN cannnot exist for different books!", 403);
+    }
+
+    const query = `
+        UPDATE Books
+        SET ${fields.join(", ")}
+        WHERE id = ?
+    `;
+
+    values.push(id);
+
+    const [result] = await db.execute(query, values as any);
+
+    const updateResult = result as {
+        affectedRows: number;
+    };
+
+    if (updateResult.affectedRows === 0) {
         throw new AppError(`Book with id ${id} not found`, 404);
     }
-    if (isbnExist) {
-        throw new AppError(`Book with isbn ${updatedBook.isbn} already exists`, 400);
+
+    // Fetch the updated record
+    const [rows] = await db.query(
+        "SELECT * FROM Books WHERE id = ?",
+        [id]
+    );
+
+    const updated = rows as Book[];
+
+    return updated[0] as Book;
+};
+const handleDeleteBook = async (id: number): Promise<Book> => {
+    const bookExistence = checkBookExistence(id);
+    if (!bookExistence) {
+        throw new AppError("This book was not found!", 404)
     }
-    if (!authorExists) {
-        throw new AppError(`Author detail was not found!`, 404);
-    }
+    const query = `DELETE FROM Books WHERE id = ?`;
 
-    // Merges existing book with only the defined fields in updatedBook
-    const updatedBookData: Book = {
-        ...books[index],
-        ...updatedBook,
-    } as Book;
-
-    books[index] = updatedBookData;
-
-    return updatedBookData;
-
-}
-
-const handleDeleteBook = (id: number) => {
-    const bookIndex = books.findIndex(book => book.id === id);
-    if (bookIndex === -1) {
-        throw new AppError(`Book with ID ${id} not found!`, 404);
-    }
-    const deletedBook = books.splice(bookIndex, 1)[0];
-    return deletedBook;
+    const [result] = await db.execute(query, [id]);
+    console.log(result)
+    const deleted = result as Book[];
+    return deleted[0] as Book;
 }
 
 export { handleGetAllBooks, handleGetBookById, handleUpdateBook, handleAddBook, handleDeleteBook };
