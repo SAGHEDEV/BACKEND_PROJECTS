@@ -7,17 +7,21 @@ export class AppError extends Error {
     }
 }
 
-const handleError = (err: AppError, _req: any, res: any, _next: any) => {
+const handleError = (err: Error & { statusCode?: number }, _req: any, res: any, _next: any) => {
     if (err instanceof AppError) {
-        res.status(err.statusCode).json({
+        return res.status(err.statusCode).json({
             success: false,
             message: err.message,
         });
     }
 
+    console.error(err);
+
     res.status(500).json({
         success: false,
-        message: "Internal Server Error",
+        message: process.env.NODE_ENV === "production"
+            ? "Internal Server Error"
+            : err.message,
     });
 }
 
