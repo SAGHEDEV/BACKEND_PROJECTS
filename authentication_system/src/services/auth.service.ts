@@ -1,15 +1,15 @@
+import "dotenv/config";
 import db from "../config/database.js";
 import { AppError } from "../middleware/error.middleware.js";
 import type { GenericResponse, LoginResponse, RefreshToken, RegisterUserResponse, User } from "../types/index.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
-import "dotenv/config";
 
 const JWT_SECRET = process.env.JWT_SECRET_TOKEN;
 const REFRESH_SECRET_TOKEN = process.env.REFRESH_SECRET_TOKEN;
 
 if (!JWT_SECRET || !REFRESH_SECRET_TOKEN) {
-    throw new Error("JWT_SECRET_TOKEN is not configured");
+    throw new Error("JWT_SECRET_TOKEN or REFRESH_SECRET_TOKEN is not configured");
 }
 
 function getFutureDate(daysAhead: number = 7) {
@@ -26,18 +26,19 @@ const handleGenerateJWTToken = ({ id, role }: { id: number, role: string }): str
         },
         JWT_SECRET,
         {
-            expiresIn: "15m"
+            expiresIn: "15m",
+            jwtid: crypto.randomUUID(),
         }
     );
     return token
 }
 
 const handleGenerateRefreshToken = ({ id, role }: { id: number, role: string }): string => {
-    const token = jwt.sign({ sub: id, role: role }, REFRESH_SECRET_TOKEN, { expiresIn: "7d" });
+    const token = jwt.sign({ sub: id, role: role }, REFRESH_SECRET_TOKEN, { expiresIn: "7d", jwtid: crypto.randomUUID() });
     return token
 }
 
-const handleCheckUserExistence = async ({ id, email }: { id?: number, email?: string }): Promise<Boolean> => {
+const handleCheckUserExistence = async ({ id, email }: { id?: number, email?: string }): Promise<boolean> => {
     let query: string = "";
     let value: string | number = "";
 
@@ -51,7 +52,6 @@ const handleCheckUserExistence = async ({ id, email }: { id?: number, email?: st
         return false;
     }
     const [rows] = await db.query(query, value);
-    console.log(rows)
     return (rows as User[]).length > 0
 }
 
@@ -59,30 +59,39 @@ const handleVerifyUserToken = ({ token }: { token?: string }) => {
     if (!token) {
         throw new AppError("User is unauthorized!", 401);
     }
-    const decoded = jwt.verify(token, String(process.env.JWT_SECRET_TOKEN));
+    try {
 
-    if (!decoded) {
+        const decoded = jwt.verify(token, String(process.env.JWT_SECRET_TOKEN));
+
+        if (!decoded) {
+            throw new AppError("Unauthorized request!", 401);
+        }
+
+        return decoded
+    } catch {
         throw new AppError("Unauthorized request!", 401);
     }
-
-    return decoded
 }
 
 const handleVerifyRefreshToken = ({ token }: { token?: string }) => {
     if (!token) {
         throw new AppError("User is unauthorized!", 401);
     }
-    const decoded = jwt.verify(token, String(process.env.REFRESH_SECRET_TOKEN));
+    try {
+        const decoded = jwt.verify(token, String(process.env.REFRESH_SECRET_TOKEN));
 
-    if (!decoded) {
+        if (!decoded) {
+            throw new AppError("Unauthorized request!", 401);
+        }
+
+        return decoded
+    } catch (error) {
         throw new AppError("Unauthorized request!", 401);
     }
-
-    return decoded
 }
 
 const handleRegisterUser = async ({ user }: { user: Omit<User, 'id' | 'createdAt' | 'role'> }): Promise<RegisterUserResponse> => {
-    const checkUserExistence = await handleCheckUserExistence({ email: user?.email! })
+    const checkUserExistence = await handleCheckUserExistence({ email: user?.email })
 
     if (checkUserExistence) {
         throw new AppError(`A user with the email ${user.email} already exist!`, 403)
@@ -90,11 +99,11 @@ const handleRegisterUser = async ({ user }: { user: Omit<User, 'id' | 'createdAt
 
     const salt = await bcrypt.genSalt(10);
     const hashPassword = await bcrypt.hash(user.password, salt);
-    const query = "INSERT INTO user (name, email, password, role) VALUES (?, ?, ?, ?)";
+    const query = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
 
     const values = [user.name, user.email, hashPassword, "user"];
 
-    const [result] = await db.execute(query, values as any);
+    const [result] = await db.execute(query, values);
 
     const insertResult = result as { insertId: number };
     const createdUser: Omit<User, 'password'> = {
@@ -114,14 +123,12 @@ const handleRegisterUser = async ({ user }: { user: Omit<User, 'id' | 'createdAt
 const handleLoginUser = async ({ email, password }: { email: string; password: string }): Promise<LoginResponse> => {
     const query = "SELECT * FROM users WHERE email = ?";
 
-    const checkUserExistence = await handleCheckUserExistence({ email: email! })
-    console.log(email, password, checkUserExistence)
-    if (!checkUserExistence) {
-        throw new AppError(`User not found!`, 404)
-    }
-
     const [rows] = await db.query(query, [email]);
     const userRetrieved = (rows as User[])[0] as User;
+    if (!userRetrieved || (rows as User[]).length === 0) {
+        throw new AppError("Invalid email or password!", 401);
+
+    }
 
     const correctPassword = await bcrypt.compare(password, userRetrieved.password)
 
@@ -185,7 +192,7 @@ const handleGenerateNewToken = async ({ token }: { token: string }): Promise<Gen
         role: String((decodedValue as jwt.JwtPayload).role)
     }
 
-    const userExistence = handleCheckUserExistence({ id: user_value.id });
+    const userExistence = await handleCheckUserExistence({ id: user_value.id });
 
     if (!userExistence) {
         throw new AppError("User not found!", 404)
@@ -212,6 +219,15 @@ const handleGenerateNewToken = async ({ token }: { token: string }): Promise<Gen
     if (updatedResult.affectedRows === 0) {
         throw new AppError("Refresh token not found or already revoked!", 404)
     }
+
+    await db.execute(
+        `
+    INSERT INTO refresh_tokens
+    (user_id, token, expires_at)
+    VALUES (?, ?, ?)
+    `,
+        [user_value.id, new_refresh_token, getFutureDate(7)]
+    );
 
     return {
         message: "Token refreshed successfully!",
