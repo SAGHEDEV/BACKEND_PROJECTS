@@ -4,6 +4,25 @@ import jwt from "jsonwebtoken";
 import { AppError } from "./error.middleware.js";
 import type { User } from "../types/index.js";
 
+const rolePermissions: Record<User["role"], string[]> = {
+    user: [
+        "profile.read",
+        "profile.update",
+        "password.change"
+    ],
+
+    admin: [
+        "profile.read",
+        "profile.update",
+        "users.create",
+        "users.read",
+        "users.update",
+        "users.delete",
+        "users.suspend",
+        "users.change_role"
+    ]
+};
+
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
 
@@ -16,7 +35,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     if (!token) {
         throw new AppError("Invalid authorization header", 401);
     }
-    
+
     const decoded = handleVerifyUserToken({ token: token });
     const user_value = {
         id: Number((decoded as jwt.JwtPayload).sub),
@@ -43,3 +62,15 @@ export const authorizeRoles = (...roles: User["role"][]) => {
         next();
     };
 };
+
+export const authorizePermission = (permission: string) => {
+    return (req: Request, _res: Response, next: NextFunction) => {
+        if (!req.user) {
+            throw new AppError("Authentication required", 401);
+        }
+        if (!rolePermissions[req.user.role].includes(permission)) {
+            throw new AppError("User not authorized!", 403);
+        }
+        next()
+    }
+}

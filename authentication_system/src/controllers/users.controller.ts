@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { handleGetAllUsers } from "../services/users.services.js";
+import { handleCreateNewUser, handleGetAllUsers } from "../services/users.services.js";
 
 const getAllUsersController = async (req: Request, res: Response) => {
     const { limit, page, search } = req.query as { limit: string, page: string, search: string };
@@ -11,9 +11,10 @@ const getAllUsersController = async (req: Request, res: Response) => {
     res.status(200).json(response)
 }
 
-// const deleteAnyUserController = async (req: Request, res: Response)=>{
-//     const idToDelete = req.params.id;
-//     const response = handleDe
-// }
+const createUserController = async (req: Request, res: Response) => {
+    const payload = req.body;
+    const response = await handleCreateNewUser({ ...payload });
+    res.status(201).json(response)
+}
 
-export { getAllUsersController }
+export { getAllUsersController, createUserController }
