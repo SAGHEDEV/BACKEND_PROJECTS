@@ -26,14 +26,20 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     next();
 }
 
-export const authorizeAdmin = (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-) => {
-    if (req.user?.role !== "admin") {
-        throw new AppError("User not authorized!", 403);
-    }
+export const authorizeRoles = (...roles: User["role"][]) => {
+    return (
+        req: Request,
+        _res: Response,
+        next: NextFunction
+    ) => {
+        if (!req.user) {
+            throw new AppError("Authentication required", 401);
+        }
 
-    next();
+        if (!roles.includes(req.user.role)) {
+            throw new AppError("User not authorized!", 403);
+        }
+
+        next();
+    };
 };

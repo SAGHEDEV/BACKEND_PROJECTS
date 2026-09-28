@@ -111,6 +111,7 @@ const handleRegisterUser = async ({ user }: { user: Omit<User, 'id' | 'createdAt
         name: user.name,
         email: user.email,
         role: "user",
+        status: "active",
         createdAt: new Date(),
         updatedAt: new Date()
     };
@@ -129,6 +130,10 @@ const handleLoginUser = async ({ email, password }: { email: string; password: s
     if (!userRetrieved || (rows as User[]).length === 0) {
         throw new AppError("Invalid email or password!", 401);
 
+    }
+
+    if (userRetrieved.status === "inactive") {
+        throw new AppError("Account has been deactivated. Contact Admin for activation!", 403)
     }
 
     const correctPassword = await bcrypt.compare(password, userRetrieved.password)
@@ -156,6 +161,7 @@ const handleLoginUser = async ({ email, password }: { email: string; password: s
         role: userRetrieved.role,
         createdAt: userRetrieved.createdAt,
         updatedAt: userRetrieved.updatedAt,
+        status: userRetrieved.status
     };
 
     return {

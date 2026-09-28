@@ -6,6 +6,7 @@ export interface User {
     role: 'admin' | 'user';
     createdAt: Date;
     updatedAt: Date;
+    status: 'active' | 'inactive';
 }
 
 interface GenericResponse {
