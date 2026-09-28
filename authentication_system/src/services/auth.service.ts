@@ -69,7 +69,7 @@ const handleVerifyUserToken = ({ token }: { token?: string }) => {
 
         return decoded
     } catch {
-        throw new AppError("Unauthorized request!", 401);
+        throw new AppError("Token expired or invalid!", 401);
     }
 }
 
@@ -86,7 +86,7 @@ const handleVerifyRefreshToken = ({ token }: { token?: string }) => {
 
         return decoded
     } catch (error) {
-        throw new AppError("Unauthorized request!", 401);
+        throw new AppError("Token expired or invalid!", 401);
     }
 }
 
@@ -111,7 +111,8 @@ const handleRegisterUser = async ({ user }: { user: Omit<User, 'id' | 'createdAt
         name: user.name,
         email: user.email,
         role: "user",
-        createdAt: new Date()
+        createdAt: new Date(),
+        updatedAt: new Date()
     };
     return {
         message: "Registration successful! User account created!",
@@ -153,7 +154,8 @@ const handleLoginUser = async ({ email, password }: { email: string; password: s
         name: userRetrieved.name,
         email: userRetrieved.email,
         role: userRetrieved.role,
-        createdAt: userRetrieved.createdAt
+        createdAt: userRetrieved.createdAt,
+        updatedAt: userRetrieved.updatedAt,
     };
 
     return {

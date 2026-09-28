@@ -5,6 +5,7 @@ export interface User {
     password: string;
     role: 'admin' | 'user';
     createdAt: Date;
+    updatedAt: Date;
 }
 
 interface GenericResponse {
