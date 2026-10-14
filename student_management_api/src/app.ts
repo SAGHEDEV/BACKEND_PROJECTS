@@ -6,7 +6,7 @@ import notFoundHandler from "./middleware/notFound.js";
 const app = express();
 
 app.use(express.json());
-app.use(handleAuthIntercept);
+// app.use(handleAuthIntercept);
 
 // Routes
 app.use("/api", router);

@@ -1,0 +1,71 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+}
+
+enum Grade {
+    DISTINCTION
+    EXCELLENT
+    PASS
+    FAIL
+}
+
+enum Status {
+    ACTIVE
+    INACTIVE
+}
+
+model Student {
+    id Int @id @default(autoincrement())
+    name String
+    email String @unique
+    createdAt DateTime @default(now())
+
+    enrollments Enrollment[]
+
+    @@index([name], name: "student_name_index")
+    @@index([email], name: "student_email_index")
+}
+
+model Teacher {
+    id Int @id @default(autoincrement())
+    name String
+    email String @unique
+    createdAt DateTime @default(now())
+
+    courses Course[]
+
+    @@index([name], name: "teacher_name_index")
+    @@index([email], name: "teacher_email_index")
+}
+
+model Course {
+    id Int @id @default(autoincrement())
+    name String
+    code String
+    createdAt DateTime @default(now())
+    teacherId Int
+
+    enrollments Enrollment[]
+    teacher Teacher @relation(fields:[teacherId], references:[id], onDelete: Cascade)
+
+    @@index([code], name: "course_code_index")
+    @@index([teacherId], name: "course_teacher_index")
+}
+
+model Enrollment {
+    id Int @id @default(autoincrement())
+    studentId Int
+    courseId Int
+    enrolledAt DateTime @default(now())
+    grade Grade?
+    status Status @default(ACTIVE)
+
+    student Student @relation(fields:[studentId], references:[id], onDelete: Cascade)
+    course Course @relation(fields:[courseId], references:[id], onDelete: Cascade)
+
+    @@unique([studentId, courseId])
+}
