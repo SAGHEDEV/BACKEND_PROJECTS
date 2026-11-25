@@ -1,3 +1,4 @@
+import '../types/express';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { sendResponse } from '../utils/response';

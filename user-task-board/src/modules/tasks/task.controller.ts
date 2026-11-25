@@ -1,3 +1,4 @@
+import '../../types/express';
 import { NextFunction, Request, Response } from 'express';
 import { sendResponse } from '../../utils/response';
 import { taskService } from './task.service';
